@@ -14,7 +14,7 @@ abstract class TreeDatabase<T>: ViewModel() {
     var highestId = 1
 
 
-    fun addTree(tree: Tree<T>){
+    private fun addTree(tree: Tree<T>){
         highestId ++
         tree.id = highestId.toString()
         trees[highestId.toString()] = tree
@@ -53,7 +53,12 @@ abstract class TreeDatabase<T>: ViewModel() {
     }
 
     fun loadTrees(treeMap: HashMap<String, Tree<T>>){
+        treeMap[ROOT_ID]?.data?.let{
+            root().data = it
+        }
+
         trees.clear()
+        root().children.clear()
         treeMap.remove(ROOT_ID)
         trees.putAll(treeMap)
         for ((id, tree) in trees){
