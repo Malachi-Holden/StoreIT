@@ -14,7 +14,7 @@ Example: Where is the pasta pot?
 
 - Search for "pasta pot" in the app
 - View chain of locations
-- Home > Kitchen > left cubbord > bottom shelf
+- Home > Kitchen > left cupboard > bottom shelf
 
 You immediately have a direct route to the item.
 

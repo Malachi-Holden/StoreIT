@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.TextView
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -49,7 +48,9 @@ class HelloListFragment : Fragment() {
         val descriptionView: EditText = view.findViewById(R.id.description_view)
         descriptionView.setText(tree?.data?.description)
         descriptionView.addTextChangedListener {
-            tree?.data?.description = it.toString()
+            val data = tree?.data ?: MainActivity.Location("")
+            data.description = it.toString()
+            tree?.data = data
             main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
         }
     }
@@ -63,8 +64,8 @@ class HelloListFragment : Fragment() {
     private fun onNewChildClicked(){
         val editText = EditText(context)
         editText.inputType = InputType.TYPE_CLASS_TEXT
-        android.app.AlertDialog.Builder(context).setTitle("New Child")
-            .setMessage("Enter Child Name")
+        android.app.AlertDialog.Builder(context).setTitle("New Location")
+            .setMessage("Enter Location Name")
             .setView(editText)
             .setNegativeButton("Cancel"){ _, _ -> }
             .setPositiveButton("Create"){ _, _ -> onNewChildCreated(editText.text.toString())}
