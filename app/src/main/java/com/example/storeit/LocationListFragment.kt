@@ -24,6 +24,8 @@ class HelloListFragment : Fragment() {
     private var treeId: String? = null
     private var tree: Tree<MainActivity.Location>? = null
     private var helloList: RecyclerView? = null
+
+    var preSaveLocationList = mutableListOf<Tree<MainActivity.Location>?>()
     var newChildButton: FloatingActionButton? = null
     var beginEditButton: FloatingActionButton? = null
     var saveButton: FloatingActionButton? = null
@@ -68,10 +70,10 @@ class HelloListFragment : Fragment() {
         descriptionView?.text = tree?.data?.description
     }
 
-    private fun reloadList(){
+    private fun reloadList(extraChildren: List<Tree<MainActivity.Location>?> = listOf()){
         val main = activity as MainActivity
         val adapterTrees = main.treeDatabase?.getChildrenById(treeId) ?: listOf()
-        helloList?.adapter = LocationListAdapter(adapterTrees){ pos -> onChildClicked(pos) }
+        helloList?.adapter = LocationListAdapter(adapterTrees, extraChildren){ pos -> onChildClicked(pos) }
     }
 
     private fun onChildClicked(pos: Int){
@@ -104,6 +106,7 @@ class HelloListFragment : Fragment() {
         main.supportActionBar?.setDisplayHomeAsUpEnabled(true)
         main.supportActionBar?.setHomeAsUpIndicator(android.R.drawable.ic_menu_close_clear_cancel)
         isEditing = true
+        preSaveLocationList.clear()
     }
 
     private fun onEndEditClicked(){
@@ -122,6 +125,9 @@ class HelloListFragment : Fragment() {
         data.description = newDescription
         data.title = main.titleView?.text?.toString() ?: ""
         tree?.data = data
+        for (child in preSaveLocationList){
+            if (child != null) main.treeDatabase?.addChild(child, treeId)
+        }
         main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
     }
 
@@ -139,17 +145,17 @@ class HelloListFragment : Fragment() {
         main.supportActionBar?.setHomeAsUpIndicator(null)
         main.supportActionBar?.setDisplayHomeAsUpEnabled(main.supportFragmentManager.backStackEntryCount > 1)
         isEditing = false
+        preSaveLocationList.clear()
+        reloadList()
         hideSoftKeyboard()
     }
 
     private fun onNewChildCreated(title: String){
-        val main = activity as MainActivity
-        main.treeDatabase?.addChild(Tree(data = MainActivity.Location(title)), treeId)
-        endEditing()
-        main.treeDatabase?.let{
-            helloList?.adapter = LocationListAdapter(it.getChildrenById(tree?.id)){ pos -> onChildClicked(pos) }
-        }
-        main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
+        preSaveLocationList.add(Tree(data = MainActivity.Location(title)))
+//        main.treeDatabase?.addChild(Tree(data = MainActivity.Location(title)), treeId)
+//        endEditing()
+        reloadList(preSaveLocationList)
+//        main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
