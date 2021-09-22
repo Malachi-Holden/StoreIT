@@ -3,7 +3,13 @@ package com.example.storeit
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.LayoutInflater
 import android.view.MenuItem
+import android.widget.EditText
+import androidx.appcompat.app.ActionBar
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
 import com.example.storeit.model.UIModel
 import com.example.storeit.model.ROOT_ID
@@ -14,6 +20,12 @@ val TREE_PREFERENCES = "TREE_PREFERENCES"
 class MainActivity : AppCompatActivity() {
     var treeDatabase: LocationDatabase?  = null
     var uiModel: UIModel? = null
+    var titleTextChangedListener: ((text: String?)->Unit)? = null
+
+    val titleView: EditText?
+        get() = supportActionBar?.customView?.findViewById(R.id.edit_title_view)
+
+    var titleWatcher: TextWatcher? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,15 +34,39 @@ class MainActivity : AppCompatActivity() {
         treeDatabase?.loadTrees(TreeDatabase.loadFromStorage(getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE)))
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
+        supportActionBar?.setDisplayShowCustomEnabled(false)
+        supportActionBar?.setDisplayShowTitleEnabled(true)
+        val layoutInflater: LayoutInflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val editTitleView = layoutInflater.inflate(R.layout.editable_title, null)
+        val layoutParams = ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT)
+        supportActionBar?.setCustomView(editTitleView, layoutParams)
+        titleWatcher = object: TextWatcher{
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                onTitleTextChanged(s.toString())
+            }
+        }
+        titleView?.addTextChangedListener(titleWatcher)
         supportFragmentManager.backStackEntryCount.let{
             for (i in 0..it){
                 supportFragmentManager.popBackStack()
             }
         }
-
         uiModel?.currentTreeId?.let{
             displayTreeStack(it)
         }
+    }
+
+    fun onTitleTextChanged(title: String){
+        titleTextChangedListener?.let { it(title) }
+    }
+
+    fun setTreeTitle(title: String?){
+        titleView?.removeTextChangedListener(titleWatcher)
+        titleView?.setText(title)
+        titleView?.addTextChangedListener(titleWatcher)
+        supportActionBar?.title = title
     }
 
     private fun displayTreeStack(id: String){
@@ -53,14 +89,6 @@ class MainActivity : AppCompatActivity() {
         }
         transaction.commit()
         uiModel?.currentTreeId = id
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home){
-            supportFragmentManager.popBackStack()
-            return true
-        }
-        return super.onOptionsItemSelected(item)
     }
 
     class LocationDatabase: TreeDatabase<Location>(){
