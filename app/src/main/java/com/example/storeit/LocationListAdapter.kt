@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import androidx.recyclerview.widget.RecyclerView
 import com.example.storeit.model.Tree
 
@@ -11,7 +12,7 @@ class LocationListAdapter(private val helloTrees: List<Tree<MainActivity.Locatio
                           val tempTrees: List<Tree<MainActivity.Location>?> = listOf(),
                           val editMode: Boolean = false,
                           val childAction: (Int) -> Unit,
-                          val deleteChildAction: (Int) -> Unit
+                          val toggleDeleteChildAction: (Int, Boolean) -> Unit
                             ): RecyclerView.Adapter<LocationListAdapter.HelloViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HelloViewHolder {
@@ -19,12 +20,15 @@ class LocationListAdapter(private val helloTrees: List<Tree<MainActivity.Locatio
     }
 
     override fun onBindViewHolder(holder: HelloViewHolder, position: Int) {
-        holder.goToLocationButton.text = (helloTrees+tempTrees)[position]?.data?.title
-        holder.goToLocationButton.setOnClickListener { childAction(position) }
-        holder.goToLocationButton.isEnabled = !editMode
+        holder.onBind(
+            editMode,
+            (helloTrees+tempTrees)[position]?.data?.title ?: "",
+            {childAction(position)},
+            {deleteSelected ->
+                toggleDeleteChildAction(position, deleteSelected)
+            }
+        )
 
-        holder.deleteLocationButton.setOnClickListener { deleteChildAction(position) }
-        holder.deleteLocationButton.visibility = if (editMode) View.VISIBLE else View.GONE
     }
 
     override fun getItemCount() = helloTrees.size + tempTrees.size
@@ -32,5 +36,29 @@ class LocationListAdapter(private val helloTrees: List<Tree<MainActivity.Locatio
     class HelloViewHolder(view: View): RecyclerView.ViewHolder(view){
         var goToLocationButton: Button = view.findViewById(R.id.go_to_location_button)
         var deleteLocationButton: Button = view.findViewById(R.id.remove_location_button)
+        var cancelDeleteButton: Button = view.findViewById(R.id.cancel_remove_button)
+        var deleteSelected = false
+
+        fun onBind(inEditMode: Boolean, locationText: String, locationClickListener: ()->Unit, deleteToggleListener: (Boolean)->Unit){
+            goToLocationButton.text = locationText
+            goToLocationButton.setOnClickListener { locationClickListener() }
+            goToLocationButton.isEnabled = !inEditMode
+
+            deleteLocationButton.visibility = if (!inEditMode || deleteSelected) View.GONE else View.VISIBLE
+            deleteLocationButton.setOnClickListener {
+                deleteSelected = true
+                deleteLocationButton.visibility = View.GONE
+                cancelDeleteButton.visibility = View.VISIBLE
+                deleteToggleListener(true)
+            }
+
+            cancelDeleteButton.visibility = if (!inEditMode || !deleteSelected) View.GONE else View.VISIBLE
+            cancelDeleteButton.setOnClickListener {
+                deleteSelected = false
+                deleteLocationButton.visibility = View.VISIBLE
+                cancelDeleteButton.visibility = View.GONE
+                deleteToggleListener(false)
+            }
+        }
     }
 }

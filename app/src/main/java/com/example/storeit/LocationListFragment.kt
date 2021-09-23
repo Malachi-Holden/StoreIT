@@ -23,6 +23,7 @@ class HelloListFragment : Fragment() {
     private var helloList: RecyclerView? = null
 
     var preSaveLocationList = mutableListOf<Tree<MainActivity.Location>?>()
+    val locationsToDelete = mutableListOf<Int>()
     var newChildButton: FloatingActionButton? = null
     var beginEditButton: FloatingActionButton? = null
     var saveButton: FloatingActionButton? = null
@@ -76,7 +77,7 @@ class HelloListFragment : Fragment() {
             preSaveLocationList,
             isEditing,
             { pos -> onChildClicked(pos) },
-            { pos -> onDeleteChildClicked(pos)}
+            { pos, deleteSelected -> onDeleteChildToggled(pos, deleteSelected)}
         )
     }
 
@@ -97,28 +98,24 @@ class HelloListFragment : Fragment() {
             .show()
     }
 
-    private fun onDeleteChildClicked(pos: Int){
-        val treeSize = tree?.children?.size ?: 0
-        if (pos >= treeSize){
-            preSaveLocationList.removeAt(pos - treeSize)
-            reloadList()
-            return
+    private fun onDeleteChildToggled(pos: Int, deleteSelected: Boolean){
+        if (deleteSelected){
+            locationsToDelete.add(pos)
         }
-        val main = activity as MainActivity
-        val childName = main.treeDatabase?.getChildrenById(treeId)?.get(pos)?.data?.title ?: "child not found"
-        AlertDialog.Builder(context).setTitle("Delete location?")
-            .setMessage("Location $childName and all its sub locations can never be recovered after this.")
-            .setNegativeButton("Cancel"){_, _ ->}
-            .setPositiveButton("Do it"){_, _ -> deleteChild(pos)}
-            .show()
+        else{
+            locationsToDelete.remove(pos)
+        }
     }
 
     private fun deleteChild(pos: Int){
+        val treeSize = tree?.children?.size ?: 0
+        if (pos >= treeSize){
+            preSaveLocationList.removeAt(pos - treeSize)
+            return
+        }
         val main = activity as MainActivity
         val childId = main.treeDatabase?.getChildrenById(treeId)?.get(pos)?.id
         main.treeDatabase?.recursiveDeleteTreeById(childId)
-        reloadList()
-        main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
     }
 
     private fun onEditClicked(){
@@ -154,6 +151,9 @@ class HelloListFragment : Fragment() {
         data.description = newDescription
         data.title = main.titleView?.text?.toString() ?: ""
         tree?.data = data
+        for (childPosition in locationsToDelete){
+            deleteChild(childPosition)
+        }
         for (child in preSaveLocationList){
             if (child != null) main.treeDatabase?.addChild(child, treeId)
         }
@@ -181,10 +181,7 @@ class HelloListFragment : Fragment() {
 
     private fun onNewChildCreated(title: String){
         preSaveLocationList.add(Tree(data = MainActivity.Location(title)))
-//        main.treeDatabase?.addChild(Tree(data = MainActivity.Location(title)), treeId)
-//        endEditing()
         reloadList()
-//        main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
