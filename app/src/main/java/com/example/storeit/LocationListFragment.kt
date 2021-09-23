@@ -1,21 +1,18 @@
 package com.example.storeit
 
+import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
 import android.text.InputType
 import android.view.*
 import android.widget.EditText
 import android.widget.TextView
-import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.storeit.model.Tree
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import android.view.MenuInflater
 import android.view.inputmethod.InputMethodManager
-import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
 
 
 private const val ARG_TREE = "ARG_TREE"
@@ -47,12 +44,14 @@ class HelloListFragment : Fragment() {
         val main = activity as MainActivity
         main.setTreeTitle(tree?.data?.title)
         main.supportActionBar?.setDisplayHomeAsUpEnabled(main.supportFragmentManager.backStackEntryCount > 1)
+        preSaveLocationList.clear()
         reloadList()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         helloList = view.findViewById(R.id.hello_list)
+        preSaveLocationList.clear()
         reloadList()
         helloList?.layoutManager = LinearLayoutManager(context)
         beginEditButton = view.findViewById(R.id.edit_location_button)
@@ -70,10 +69,15 @@ class HelloListFragment : Fragment() {
         descriptionView?.text = tree?.data?.description
     }
 
-    private fun reloadList(extraChildren: List<Tree<MainActivity.Location>?> = listOf()){
+    private fun reloadList() {
         val main = activity as MainActivity
         val adapterTrees = main.treeDatabase?.getChildrenById(treeId) ?: listOf()
-        helloList?.adapter = LocationListAdapter(adapterTrees, extraChildren){ pos -> onChildClicked(pos) }
+        helloList?.adapter = LocationListAdapter(adapterTrees,
+            preSaveLocationList,
+            isEditing,
+            { pos -> onChildClicked(pos) },
+            { pos -> onDeleteChildClicked(pos)}
+        )
     }
 
     private fun onChildClicked(pos: Int){
@@ -85,12 +89,36 @@ class HelloListFragment : Fragment() {
     private fun onNewChildClicked(){
         val editText = EditText(context)
         editText.inputType = InputType.TYPE_CLASS_TEXT
-        android.app.AlertDialog.Builder(context).setTitle("New Location")
+        AlertDialog.Builder(context).setTitle("New Location")
             .setMessage("Enter Location Name")
             .setView(editText)
             .setNegativeButton("Cancel"){ _, _ -> }
             .setPositiveButton("Create"){ _, _ -> onNewChildCreated(editText.text.toString())}
             .show()
+    }
+
+    private fun onDeleteChildClicked(pos: Int){
+        val treeSize = tree?.children?.size ?: 0
+        if (pos >= treeSize){
+            preSaveLocationList.removeAt(pos - treeSize)
+            reloadList()
+            return
+        }
+        val main = activity as MainActivity
+        val childName = main.treeDatabase?.getChildrenById(treeId)?.get(pos)?.data?.title ?: "child not found"
+        AlertDialog.Builder(context).setTitle("Delete location?")
+            .setMessage("Location $childName and all its sub locations can never be recovered after this.")
+            .setNegativeButton("Cancel"){_, _ ->}
+            .setPositiveButton("Do it"){_, _ -> deleteChild(pos)}
+            .show()
+    }
+
+    private fun deleteChild(pos: Int){
+        val main = activity as MainActivity
+        val childId = main.treeDatabase?.getChildrenById(treeId)?.get(pos)?.id
+        main.treeDatabase?.recursiveDeleteTreeById(childId)
+        reloadList()
+        main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
     }
 
     private fun onEditClicked(){
@@ -107,6 +135,7 @@ class HelloListFragment : Fragment() {
         main.supportActionBar?.setHomeAsUpIndicator(android.R.drawable.ic_menu_close_clear_cancel)
         isEditing = true
         preSaveLocationList.clear()
+        reloadList()
     }
 
     private fun onEndEditClicked(){
@@ -154,7 +183,7 @@ class HelloListFragment : Fragment() {
         preSaveLocationList.add(Tree(data = MainActivity.Location(title)))
 //        main.treeDatabase?.addChild(Tree(data = MainActivity.Location(title)), treeId)
 //        endEditing()
-        reloadList(preSaveLocationList)
+        reloadList()
 //        main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
     }
 

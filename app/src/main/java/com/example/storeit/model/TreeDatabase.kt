@@ -14,7 +14,7 @@ abstract class TreeDatabase<T>: ViewModel() {
     var highestId = 1
 
 
-    private fun addTree(tree: Tree<T>){
+    fun addTree(tree: Tree<T>){
         highestId ++
         tree.id = highestId.toString()
         trees[highestId.toString()] = tree
@@ -37,6 +37,23 @@ abstract class TreeDatabase<T>: ViewModel() {
                 getTreeById(it)
             }
         ?: listOf<Tree<T>>()
+
+    fun recursiveDeleteTreeById(id: String?){
+        val tree = getTreeById(id) ?: return
+        recursiveDeleteChildren(tree)
+        val parent = getTreeById(tree.parentId)
+        trees.remove(id)
+        parent?.children?.remove(id)
+    }
+
+    private fun recursiveDeleteChildren(tree: Tree<T>){
+        for (childId in tree.children){
+            val child = getTreeById(childId) ?: continue
+            recursiveDeleteChildren(child)
+            trees.remove(childId)
+        }
+        tree.children.clear()
+    }
 
     override fun toString(): String {
         val allTrees = HashMap(trees)
