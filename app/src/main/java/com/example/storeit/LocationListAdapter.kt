@@ -4,7 +4,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.CheckBox
 import androidx.recyclerview.widget.RecyclerView
 import com.example.storeit.model.Tree
 
@@ -12,14 +11,31 @@ class LocationListAdapter(private val helloTrees: List<Tree<MainActivity.Locatio
                           val tempTrees: List<Tree<MainActivity.Location>?> = listOf(),
                           val editMode: Boolean = false,
                           val childAction: (Int) -> Unit,
-                          val toggleDeleteChildAction: (Int, Boolean) -> Unit
-                            ): RecyclerView.Adapter<LocationListAdapter.HelloViewHolder>() {
+                          val toggleDeleteChildAction: (Int, Boolean) -> Unit,
+                          val addChildAction: () -> Unit
+                            ): RecyclerView.Adapter<LocationListAdapter.LocationViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HelloViewHolder {
-        return HelloViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.location_row_item, parent, false))
+    val LOCATION_VIEW_TYPE = 1
+    val ADD_LOCATION_VIEW_TYPE = 2
+
+    override fun getItemViewType(position: Int): Int {
+        if (position < helloTrees.size + tempTrees.size) return LOCATION_VIEW_TYPE
+        return ADD_LOCATION_VIEW_TYPE
     }
 
-    override fun onBindViewHolder(holder: HelloViewHolder, position: Int) {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LocationViewHolder {
+        if (viewType == ADD_LOCATION_VIEW_TYPE) {
+            return NewLocationButtonViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.new_location_item, parent, false))
+        }
+        return LocationItemViewHolder(LayoutInflater.from(parent.context).inflate( R.layout.location_row_item, parent, false))
+    }
+
+    override fun onBindViewHolder(holder: LocationViewHolder, position: Int) {
+        if (holder.itemViewType == ADD_LOCATION_VIEW_TYPE && holder is NewLocationButtonViewHolder){
+            holder.onBind { addChildAction() }
+            return
+        }
+        if (holder.itemViewType != LOCATION_VIEW_TYPE || holder !is LocationItemViewHolder) return
         holder.onBind(
             editMode,
             (helloTrees+tempTrees)[position]?.data?.title ?: "",
@@ -28,12 +44,13 @@ class LocationListAdapter(private val helloTrees: List<Tree<MainActivity.Locatio
                 toggleDeleteChildAction(position, deleteSelected)
             }
         )
-
     }
 
-    override fun getItemCount() = helloTrees.size + tempTrees.size
+    override fun getItemCount() = helloTrees.size + tempTrees.size + editMode.compareTo(false)
 
-    class HelloViewHolder(view: View): RecyclerView.ViewHolder(view){
+    open class LocationViewHolder(view: View): RecyclerView.ViewHolder(view)
+
+    class LocationItemViewHolder(view: View): LocationViewHolder(view){
         var goToLocationButton: Button = view.findViewById(R.id.go_to_location_button)
         var deleteLocationButton: Button = view.findViewById(R.id.remove_location_button)
         var cancelDeleteButton: Button = view.findViewById(R.id.cancel_remove_button)
@@ -59,6 +76,13 @@ class LocationListAdapter(private val helloTrees: List<Tree<MainActivity.Locatio
                 cancelDeleteButton.visibility = View.GONE
                 deleteToggleListener(false)
             }
+        }
+    }
+
+    class NewLocationButtonViewHolder(view: View): LocationViewHolder(view){
+        var newLocationButton: Button = view.findViewById(R.id.new_location_button)
+        fun onBind(onClick: ()->Unit){
+            newLocationButton.setOnClickListener { onClick() }
         }
     }
 }

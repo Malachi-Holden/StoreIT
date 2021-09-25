@@ -82,6 +82,14 @@ abstract class TreeDatabase<T>: ViewModel() {
             if (tree.parentId == ROOT_ID){
                 root().children.add(id)
             }
+            try {
+                val idNum = id.toInt()
+                if (idNum > highestId){
+                    highestId = idNum
+                }
+            }catch (e: NumberFormatException){
+                continue
+            }
         }
     }
 

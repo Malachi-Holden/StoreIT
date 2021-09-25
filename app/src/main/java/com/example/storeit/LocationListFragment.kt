@@ -24,7 +24,6 @@ class HelloListFragment : Fragment() {
 
     var preSaveLocationList = mutableListOf<Tree<MainActivity.Location>?>()
     val locationsToDelete = mutableListOf<Int>()
-    var newChildButton: FloatingActionButton? = null
     var beginEditButton: FloatingActionButton? = null
     var saveButton: FloatingActionButton? = null
     var editDescriptionView: EditText? = null
@@ -58,9 +57,6 @@ class HelloListFragment : Fragment() {
         beginEditButton = view.findViewById(R.id.edit_location_button)
         beginEditButton?.setOnClickListener{onEditClicked()}
 
-        newChildButton = view.findViewById(R.id.add_child_button)
-        newChildButton?.setOnClickListener{onNewChildClicked()}
-
         saveButton = view.findViewById(R.id.save_button)
         saveButton?.setOnClickListener { onSaveClicked() }
 
@@ -77,7 +73,8 @@ class HelloListFragment : Fragment() {
             preSaveLocationList,
             isEditing,
             { pos -> onChildClicked(pos) },
-            { pos, deleteSelected -> onDeleteChildToggled(pos, deleteSelected)}
+            { pos, deleteSelected -> onDeleteChildToggled(pos, deleteSelected)},
+            { onNewChildClicked() }
         )
     }
 
@@ -120,7 +117,6 @@ class HelloListFragment : Fragment() {
 
     private fun onEditClicked(){
         beginEditButton?.visibility = View.INVISIBLE
-        newChildButton?.visibility = View.VISIBLE
         saveButton?.visibility = View.VISIBLE
         val main = activity as MainActivity
         main.supportActionBar?.setDisplayShowCustomEnabled(true)
@@ -172,7 +168,6 @@ class HelloListFragment : Fragment() {
 
     private fun endEditing(){
         beginEditButton?.visibility = View.VISIBLE
-        newChildButton?.visibility = View.INVISIBLE
         saveButton?.visibility = View.INVISIBLE
         val main = activity as MainActivity
         main.supportActionBar?.setDisplayShowCustomEnabled(false)
