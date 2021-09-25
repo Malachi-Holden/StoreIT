@@ -125,6 +125,7 @@ class HelloListFragment : Fragment() {
         val main = activity as MainActivity
         main.supportActionBar?.setDisplayShowCustomEnabled(true)
         main.supportActionBar?.setDisplayShowTitleEnabled(false)
+        main.titleView?.setText(tree?.data?.title)
         editDescriptionView?.setText(tree?.data?.description)
         editDescriptionView?.visibility = View.VISIBLE
         descriptionView?.visibility = View.INVISIBLE
@@ -140,8 +141,15 @@ class HelloListFragment : Fragment() {
     }
 
     private fun onSaveClicked(){
-        save()
-        endEditing()
+        AlertDialog.Builder(context)
+            .setTitle("Save changes?")
+            .setMessage("Anything you deleted cannot be restored.")
+            .setNegativeButton("Cancel"){_,_ ->}
+            .setPositiveButton("Continue"){_,_ ->
+                save()
+                endEditing()
+            }
+            .show()
     }
 
     private fun save(){
@@ -157,6 +165,8 @@ class HelloListFragment : Fragment() {
         for (child in preSaveLocationList){
             if (child != null) main.treeDatabase?.addChild(child, treeId)
         }
+        locationsToDelete.clear()
+        preSaveLocationList.clear()
         main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
     }
 
@@ -174,7 +184,6 @@ class HelloListFragment : Fragment() {
         main.supportActionBar?.setHomeAsUpIndicator(null)
         main.supportActionBar?.setDisplayHomeAsUpEnabled(main.supportFragmentManager.backStackEntryCount > 1)
         isEditing = false
-        preSaveLocationList.clear()
         reloadList()
         hideSoftKeyboard()
     }
