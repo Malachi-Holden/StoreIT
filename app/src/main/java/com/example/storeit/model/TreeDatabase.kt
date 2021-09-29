@@ -9,7 +9,7 @@ import com.google.gson.reflect.TypeToken
 val TREE_STORAGE_KEY = "TREE_STORAGE_KEY"
 val ROOT_ID = "1"
 abstract class TreeDatabase<T>: ViewModel() {
-    open val trees:HashMap<String, Tree<T>> = hashMapOf()
+    open val trees = hashMapOf<String, Tree<T>>()
 
     var highestId = 1
 
@@ -36,7 +36,8 @@ abstract class TreeDatabase<T>: ViewModel() {
             map {
                 getTreeById(it)
             }
-        ?: listOf<Tree<T>>()
+
+
 
     fun recursiveDeleteTreeById(id: String?){
         val tree = getTreeById(id) ?: return
@@ -62,14 +63,14 @@ abstract class TreeDatabase<T>: ViewModel() {
         return gson.toJson(allTrees)
     }
 
-    fun saveToStorage(preferences: SharedPreferences){
+    open fun saveToStorage(preferences: SharedPreferences){
         val editor = preferences.edit()
         val treeString = toString()
         editor.putString(TREE_STORAGE_KEY, treeString)
         editor.apply()
     }
 
-    fun loadTrees(treeMap: HashMap<String, Tree<T>>){
+    open fun loadTrees(treeMap: HashMap<String, Tree<T>>){
         treeMap[ROOT_ID]?.data?.let{
             root().data = it
         }

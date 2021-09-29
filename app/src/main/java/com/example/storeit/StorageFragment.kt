@@ -3,46 +3,46 @@ package com.example.storeit
 import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
-import android.text.InputType
 import android.view.*
 import android.widget.EditText
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.storeit.model.Tree
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import android.view.inputmethod.InputMethodManager
+import com.example.storeit.model.Location
+import com.example.storeit.model.Tree
 
 
-private const val ARG_TREE = "ARG_TREE"
+const val ARG_STORAGE = "ARG_STORAGE"
+abstract class StorageFragment : Fragment() {
+    var contentId: String? = null
+    var locationsView: RecyclerView? = null
 
-class HelloListFragment : Fragment() {
-    private var treeId: String? = null
-    private var tree: Tree<MainActivity.Location>? = null
-    private var helloList: RecyclerView? = null
-
-    var preSaveLocationList = mutableListOf<Tree<MainActivity.Location>?>()
-    val locationsToDelete = mutableListOf<Int>()
     var beginEditButton: FloatingActionButton? = null
     var saveButton: FloatingActionButton? = null
     var editDescriptionView: EditText? = null
     var descriptionView: TextView? = null
 
+    var preSaveLocationList = mutableListOf<Tree<Location>?>()
+    val locationsToDelete = mutableListOf<Int>()
+
     var isEditing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        treeId = arguments?.getString(ARG_TREE)
-        val main = activity as MainActivity
-        tree = main.treeDatabase?.getTreeById(treeId)
+        contentId = arguments?.getString(ARG_STORAGE)
+//        treeId = arguments?.getString(ARG_TREE)
+//        val main = activity as MainActivity
+//        tree = main.treeDatabase?.getTreeById(treeId)
         setHasOptionsMenu(true)
     }
 
     override fun onResume() {
         super.onResume()
         val main = activity as MainActivity
-        main.setTreeTitle(tree?.data?.title)
+        main.setTreeTitle(storageTitle())
         main.supportActionBar?.setDisplayHomeAsUpEnabled(main.supportFragmentManager.backStackEntryCount > 1)
         preSaveLocationList.clear()
         reloadList()
@@ -50,10 +50,10 @@ class HelloListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        helloList = view.findViewById(R.id.hello_list)
+        locationsView = view.findViewById(R.id.location_list_view)
         preSaveLocationList.clear()
         reloadList()
-        helloList?.layoutManager = LinearLayoutManager(context)
+        locationsView?.layoutManager = LinearLayoutManager(context)
         beginEditButton = view.findViewById(R.id.edit_location_button)
         beginEditButton?.setOnClickListener{onEditClicked()}
 
@@ -63,37 +63,27 @@ class HelloListFragment : Fragment() {
         editDescriptionView = view.findViewById(R.id.edit_description_view)
 
         descriptionView = view.findViewById(R.id.descriptionView)
-        descriptionView?.text = tree?.data?.description
+        descriptionView?.text = storageDescription()
     }
 
-    private fun reloadList() {
+    fun reloadList() {
         val main = activity as MainActivity
-        val adapterTrees = main.treeDatabase?.getChildrenById(treeId) ?: listOf()
-        helloList?.adapter = LocationListAdapter(adapterTrees,
-            preSaveLocationList,
+        val adapterTrees = locations().map { main.treeDatabase?.getTreeById(it)?.data?.title }
+        val tempAdapterTrees = preSaveLocationList.map { it?.data?.title }
+        locationsView?.adapter = StorageAdapter(
+            adapterTrees,
+            tempAdapterTrees,
             isEditing,
+            "New Location",
             { pos -> onChildClicked(pos) },
             { pos, deleteSelected -> onDeleteChildToggled(pos, deleteSelected)},
             { onNewChildClicked() }
         )
     }
 
-    private fun onChildClicked(pos: Int){
-        tree?.children?.get(pos)?.let {
-            (activity as MainActivity).displayTree(it)
-        }
-    }
+    abstract fun onChildClicked(pos: Int)
 
-    private fun onNewChildClicked(){
-        val editText = EditText(context)
-        editText.inputType = InputType.TYPE_CLASS_TEXT
-        AlertDialog.Builder(context).setTitle("New Location")
-            .setMessage("Enter Location Name")
-            .setView(editText)
-            .setNegativeButton("Cancel"){ _, _ -> }
-            .setPositiveButton("Create"){ _, _ -> onNewChildCreated(editText.text.toString())}
-            .show()
-    }
+    abstract fun onNewChildClicked()
 
     private fun onDeleteChildToggled(pos: Int, deleteSelected: Boolean){
         if (deleteSelected){
@@ -104,25 +94,14 @@ class HelloListFragment : Fragment() {
         }
     }
 
-    private fun deleteChild(pos: Int){
-        val treeSize = tree?.children?.size ?: 0
-        if (pos >= treeSize){
-            preSaveLocationList.removeAt(pos - treeSize)
-            return
-        }
-        val main = activity as MainActivity
-        val childId = main.treeDatabase?.getChildrenById(treeId)?.get(pos)?.id
-        main.treeDatabase?.recursiveDeleteTreeById(childId)
-    }
-
-    private fun onEditClicked(){
+    open fun onEditClicked(){
         beginEditButton?.visibility = View.INVISIBLE
         saveButton?.visibility = View.VISIBLE
         val main = activity as MainActivity
         main.supportActionBar?.setDisplayShowCustomEnabled(true)
         main.supportActionBar?.setDisplayShowTitleEnabled(false)
-        main.titleView?.setText(tree?.data?.title)
-        editDescriptionView?.setText(tree?.data?.description)
+        main.titleView?.setText(storageTitle())
+        editDescriptionView?.setText(storageDescription())
         editDescriptionView?.visibility = View.VISIBLE
         descriptionView?.visibility = View.INVISIBLE
         main.supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -139,43 +118,29 @@ class HelloListFragment : Fragment() {
     private fun onSaveClicked(){
         AlertDialog.Builder(context)
             .setTitle("Save changes?")
-            .setMessage("Anything you deleted cannot be restored.")
+            .setMessage("Anything you deleted cannot be restored.") // make this customizable
             .setNegativeButton("Cancel"){_,_ ->}
             .setPositiveButton("Continue"){_,_ ->
+                val main = activity as MainActivity
                 save()
+                main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
                 endEditing()
             }
             .show()
     }
 
-    private fun save(){
-        val main = activity as MainActivity
-        val newDescription = editDescriptionView?.text.toString()
-        val data = tree?.data ?: MainActivity.Location("")
-        data.description = newDescription
-        data.title = main.titleView?.text?.toString() ?: ""
-        tree?.data = data
-        for (childPosition in locationsToDelete){
-            deleteChild(childPosition)
-        }
-        for (child in preSaveLocationList){
-            if (child != null) main.treeDatabase?.addChild(child, treeId)
-        }
-        locationsToDelete.clear()
-        preSaveLocationList.clear()
-        main.treeDatabase?.saveToStorage(main.getSharedPreferences(TREE_PREFERENCES, Context.MODE_PRIVATE))
-    }
+    abstract fun save()
 
-    private fun endEditing(){
+    open fun endEditing(){
         beginEditButton?.visibility = View.VISIBLE
         saveButton?.visibility = View.INVISIBLE
         val main = activity as MainActivity
         main.supportActionBar?.setDisplayShowCustomEnabled(false)
         main.supportActionBar?.setDisplayShowTitleEnabled(true)
-        main.supportActionBar?.title = tree?.data?.title
+        main.supportActionBar?.title = storageTitle()
         editDescriptionView?.visibility = View.INVISIBLE
         descriptionView?.visibility = View.VISIBLE
-        descriptionView?.text = tree?.data?.description
+        descriptionView?.text = storageDescription()
         main.supportActionBar?.setHomeAsUpIndicator(null)
         main.supportActionBar?.setDisplayHomeAsUpEnabled(main.supportFragmentManager.backStackEntryCount > 1)
         isEditing = false
@@ -183,10 +148,10 @@ class HelloListFragment : Fragment() {
         hideSoftKeyboard()
     }
 
-    private fun onNewChildCreated(title: String){
-        preSaveLocationList.add(Tree(data = MainActivity.Location(title)))
-        reloadList()
-    }
+//    private fun onNewChildCreated(title: String){
+//        preSaveLocationList.add(Tree(data = Location(title)))
+//        reloadList()
+//    }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val main = activity as MainActivity
@@ -216,13 +181,7 @@ class HelloListFragment : Fragment() {
 
     }
 
-    companion object {
-        @JvmStatic
-        fun newInstance(argTreeId: String) =
-            HelloListFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_TREE, argTreeId)
-                }
-            }
-    }
+    abstract fun storageTitle(): String
+    abstract fun storageDescription(): String
+    abstract fun locations(): List<String?>
 }
