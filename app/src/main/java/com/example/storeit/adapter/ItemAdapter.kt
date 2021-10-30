@@ -1,11 +1,10 @@
-package com.example.storeit
+package com.example.storeit.adapter
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import androidx.recyclerview.widget.RecyclerView
-import com.example.storeit.model.Item
+import com.example.storeit.R
 
 class ItemAdapter(baseTitles: List<String?>,
                   tempTitles: List<String?> = listOf(),

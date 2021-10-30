@@ -20,7 +20,7 @@ class LocationDatabase: TreeDatabase<Location>(){
     }
 
     var highestItemId = 1
-    var items = hashMapOf<String, Item>() //Pair("1", Item(title = "saw"))
+    var items = hashMapOf<String, Item>()
 
     fun addItem(item: Item){
         highestItemId ++
@@ -82,11 +82,7 @@ class LocationDatabase: TreeDatabase<Location>(){
     fun loadItems(itemMap: HashMap<String, Item>){
         items.clear()
         items.putAll(itemMap)
-        for ((id, item) in items){
-//            for (locationId in item.locations){
-//                if (locationId == null) continue
-//                storeItemAtLocation(id, locationId)
-//            }
+        for ((id, _) in items){
             try {
                 val idNum = id.toInt()
                 if (idNum > highestItemId){
@@ -98,17 +94,17 @@ class LocationDatabase: TreeDatabase<Location>(){
         }
     }
 
-//    override fun loadTrees(treeMap: HashMap<String, Tree<Location>>) {
-//        super.loadTrees(treeMap)
-//        for ((itemId, _) in items){
-//            try {
-//                val idNum = itemId.toInt()
-//                if (idNum > highestItemId){
-//                    highestItemId = idNum
-//                }
-//            }catch (e: NumberFormatException){
-//                continue
-//            }
-//        }
-//    }
+    fun searchLocations(searchText: String): List<Tree<Location>>{
+        if (searchText.isEmpty()) return listOf()
+        return trees.values.filter {
+            it.data?.title?.contains(searchText) ?: false
+        }
+    }
+
+    fun searchItems(searchText: String): List<Item>{
+        if (searchText.isEmpty()) return listOf()
+        return items.values.filter {
+            it.title.contains(searchText)
+        }
+    }
 }

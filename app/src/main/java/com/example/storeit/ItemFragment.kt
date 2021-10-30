@@ -1,9 +1,6 @@
 package com.example.storeit
 
-import android.app.AlertDialog
 import android.os.Bundle
-import android.text.InputType
-import android.widget.EditText
 import com.example.storeit.model.Item
 
 class ItemFragment: StorageFragment() {
