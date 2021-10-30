@@ -12,10 +12,16 @@ import android.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.storeit.adapter.SearchAdapter
+import com.example.storeit.model.Item
+import com.example.storeit.model.Location
+import com.example.storeit.model.Tree
 
 class SearchFragment : Fragment(), SearchView.OnQueryTextListener {
     var searchBar: SearchView? = null
     var searchResultsView: RecyclerView? = null
+
+    var locationResults: List<Tree<Location>> = listOf()
+    var itemResults: List<Item> = listOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,11 +51,11 @@ class SearchFragment : Fragment(), SearchView.OnQueryTextListener {
 
     fun reloadSearch(searchText: String){
         val main = activity as MainActivity
-        val locations = main.treeDatabase?.searchLocations(searchText) ?: listOf()
-        val items = main.treeDatabase?.searchItems(searchText) ?: listOf()
+        locationResults = main.treeDatabase?.searchLocations(searchText) ?: listOf()
+        itemResults = main.treeDatabase?.searchItems(searchText) ?: listOf()
 
-        val locationTitles = locations.map { it.data?.title ?: "" }
-        val itemTitles = items.map { it.title }
+        val locationTitles = locationResults.map { it.data?.title ?: "" }
+        val itemTitles = itemResults.map { it.title }
 
         searchResultsView?.adapter = SearchAdapter(
             locationTitles,
@@ -60,11 +66,11 @@ class SearchFragment : Fragment(), SearchView.OnQueryTextListener {
     }
 
     fun onSearchLocationClicked(position: Int){
-
+        (activity as MainActivity).displayTreeStack(locationResults[position].id)
     }
 
     fun onSearchItemClicked(position: Int){
-
+        (activity as MainActivity).displayItem(itemResults[position].id)
     }
 
     companion object {
