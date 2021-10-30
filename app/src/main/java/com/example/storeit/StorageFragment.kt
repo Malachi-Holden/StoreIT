@@ -149,11 +149,6 @@ abstract class StorageFragment : Fragment() {
         hideSoftKeyboard()
     }
 
-//    private fun onNewChildCreated(title: String){
-//        preSaveLocationList.add(Tree(data = Location(title)))
-//        reloadList()
-//    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val main = activity as MainActivity
         if (item.itemId == android.R.id.home){

@@ -46,12 +46,6 @@ class SearchFragment : DialogFragment(), SearchView.OnQueryTextListener {
         cancelButton = view.findViewById(R.id.cancel_button)
         cancelButton?.setOnClickListener { dismiss() }
         reloadSearch("")
-//        view.post {
-//            val dialogWindow = dialog?.window
-//            dialogWindow?.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
-//            dialogWindow?.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-//            view.invalidate()
-//        }
     }
 
 
