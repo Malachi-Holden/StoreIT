@@ -33,6 +33,7 @@ class SearchFragment : Fragment(), SearchView.OnQueryTextListener {
         searchBar?.setOnClickListener {
             searchBar?.isIconified = false
         }
+        reloadSearch("")
     }
 
     override fun onCreateView(

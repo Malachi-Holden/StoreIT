@@ -99,11 +99,17 @@ class LocationDatabase: TreeDatabase<Location>(){
     }
 
     fun searchLocations(searchText: String): List<Tree<Location>>{
-        return trees.values.toList()
+        if (searchText.isEmpty()) return listOf()
+        return trees.values.filter {
+            it.data?.title?.contains(searchText) ?: false
+        }
     }
 
     fun searchItems(searchText: String): List<Item>{
-        return items.values.toList()
+        if (searchText.isEmpty()) return listOf()
+        return items.values.filter {
+            it.title.contains(searchText)
+        }
     }
 
 //    override fun loadTrees(treeMap: HashMap<String, Tree<Location>>) {
