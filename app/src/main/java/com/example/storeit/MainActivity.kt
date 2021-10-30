@@ -3,6 +3,8 @@ package com.example.storeit
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.EditText
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
@@ -33,26 +35,26 @@ class MainActivity : AppCompatActivity() {
         val editTitleView = layoutInflater.inflate(R.layout.editable_title, null)
         val layoutParams = ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT)
         supportActionBar?.setCustomView(editTitleView, layoutParams)
-        val transaction = supportFragmentManager.beginTransaction()
-        transaction.apply {
-            replace(R.id.storeit_fragment_container, SearchFragment.newInstance())
-            addToBackStack(null)
+//        val transaction = supportFragmentManager.beginTransaction()
+//        transaction.apply {
+//            replace(R.id.storeit_fragment_container, SearchFragment.newInstance())
+//            addToBackStack(null)
+//        }
+//        transaction.commit()
+        supportFragmentManager.backStackEntryCount.let{
+            for (i in 0..it){
+                supportFragmentManager.popBackStack()
+            }
         }
-        transaction.commit()
-//        supportFragmentManager.backStackEntryCount.let{
-//            for (i in 0..it){
-//                supportFragmentManager.popBackStack()
-//            }
-//        }
-//        val currentTreeId = uiModel?.currentTreeId
-//        val currentItemId = uiModel?.currentItemId
-//        if (currentTreeId != null && currentItemId != null){
-//            displayItemStack(currentItemId, currentTreeId)
-//        }
-//        else {
-//            displayTreeStack(currentTreeId)
-//            displayItem(currentItemId)
-//        }
+        val currentTreeId = uiModel?.currentTreeId
+        val currentItemId = uiModel?.currentItemId
+        if (currentTreeId != null && currentItemId != null){
+            displayItemStack(currentItemId, currentTreeId)
+        }
+        else {
+            displayTreeStack(currentTreeId)
+            displayItem(currentItemId)
+        }
     }
     fun setTreeTitle(title: String?){
         supportActionBar?.title = title
@@ -103,5 +105,18 @@ class MainActivity : AppCompatActivity() {
         if (id == null || locationId == null) return
         displayTreeStack(locationId)
         displayItem(id)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.search_item){
+            SearchFragment.newInstance().show(supportFragmentManager, "SEARCH")
+            return true
+        }
+        return super.onOptionsItemSelected(item)
     }
 }
