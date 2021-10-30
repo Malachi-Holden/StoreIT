@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.EditText
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.storeit.adapter.ItemAdapter
 import com.example.storeit.model.Item
 import com.example.storeit.model.Location
 import com.example.storeit.model.Tree

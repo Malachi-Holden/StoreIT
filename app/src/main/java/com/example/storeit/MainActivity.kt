@@ -33,20 +33,26 @@ class MainActivity : AppCompatActivity() {
         val editTitleView = layoutInflater.inflate(R.layout.editable_title, null)
         val layoutParams = ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT)
         supportActionBar?.setCustomView(editTitleView, layoutParams)
+        val transaction = supportFragmentManager.beginTransaction()
+        transaction.apply {
+            replace(R.id.storeit_fragment_container, SearchFragment.newInstance())
+            addToBackStack(null)
+        }
+        transaction.commit()
 //        supportFragmentManager.backStackEntryCount.let{
 //            for (i in 0..it){
 //                supportFragmentManager.popBackStack()
 //            }
 //        }
-        val currentTreeId = uiModel?.currentTreeId
-        val currentItemId = uiModel?.currentItemId
-        if (currentTreeId != null && currentItemId != null){
-            displayItemStack(currentItemId, currentTreeId)
-        }
-        else {
-            displayTreeStack(currentTreeId)
-            displayItem(currentItemId)
-        }
+//        val currentTreeId = uiModel?.currentTreeId
+//        val currentItemId = uiModel?.currentItemId
+//        if (currentTreeId != null && currentItemId != null){
+//            displayItemStack(currentItemId, currentTreeId)
+//        }
+//        else {
+//            displayTreeStack(currentTreeId)
+//            displayItem(currentItemId)
+//        }
     }
     fun setTreeTitle(title: String?){
         supportActionBar?.title = title

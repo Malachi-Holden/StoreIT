@@ -98,6 +98,14 @@ class LocationDatabase: TreeDatabase<Location>(){
         }
     }
 
+    fun searchLocations(searchText: String): List<Tree<Location>>{
+        return trees.values.toList()
+    }
+
+    fun searchItems(searchText: String): List<Item>{
+        return items.values.toList()
+    }
+
 //    override fun loadTrees(treeMap: HashMap<String, Tree<Location>>) {
 //        super.loadTrees(treeMap)
 //        for ((itemId, _) in items){

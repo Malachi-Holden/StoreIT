@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import android.view.inputmethod.InputMethodManager
+import com.example.storeit.adapter.StorageAdapter
 import com.example.storeit.model.Location
 import com.example.storeit.model.Tree
 
